@@ -57,6 +57,14 @@ function(_add_variant_c_compile_link_flags
   list(APPEND result
     "-isysroot" "${SWIFT_SDK_${sdk}_PATH}")
 
+  if("${sdk}" STREQUAL "ANDROID")
+    list(APPEND result
+      "--sysroot=${SWIFT_ANDROID_SDK_PATH}"
+      # Use the linker included in the Android NDK.
+      "-B" "${SWIFT_ANDROID_NDK_PATH}/toolchains/arm-linux-androideabi-${SWIFT_ANDROID_NDK_TOOLCHAIN_VERSION}/prebuilt/linux-x86_64/arm-linux-androideabi/bin/")
+  endif()
+
+
   if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
     list(APPEND result
         "-arch" "${arch}"
@@ -120,6 +128,13 @@ function(_add_variant_c_compile_flags
                        "-fcoverage-mapping")
   endif()
 
+  if("${sdk}" STREQUAL "ANDROID")
+    list(APPEND result
+        "-I${SWIFT_ANDROID_NDK_PATH}/sources/cxx-stl/llvm-libc++/libcxx/include"
+        "-I${SWIFT_ANDROID_NDK_PATH}/sources/cxx-stl/llvm-libc++abi/libcxxabi/include"
+        "-I${SWIFT_ANDROID_NDK_PATH}/sources/android/support/include")
+  endif()
+
   set("${result_var_name}" "${result}" PARENT_SCOPE)
 endfunction()
 
@@ -179,11 +194,20 @@ function(_add_variant_link_flags
       result)
 
   if("${sdk}" STREQUAL "LINUX")
-    list(APPEND result "-lpthread" "-ldl")
+    list(APPEND result "-lpthread" "-ldl"
+      # Include libbsd, which includes dependencies needed by Android stdlib
+      # targets, such as `arc4random_uniform`.
+      "${BSD_LIBRARIES}")
   elseif("${sdk}" STREQUAL "FREEBSD")
     list(APPEND result "-lpthread")
   elseif("${sdk}" STREQUAL "CYGWIN")
     # No extra libraries required.
+  elseif("${sdk}" STREQUAL "ANDROID")
+    list(APPEND result
+        "-ldl"
+        "-L${SWIFT_ANDROID_NDK_PATH}/toolchains/arm-linux-androideabi-${SWIFT_ANDROID_NDK_TOOLCHAIN_VERSION}/prebuilt/linux-x86_64/lib/gcc/arm-linux-androideabi/${SWIFT_ANDROID_NDK_TOOLCHAIN_VERSION}"
+        "${SWIFT_ANDROID_NDK_PATH}/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a/libc++_shared.so"
+        "-L${SWIFT_ANDROID_ICU_UC}" "-L${SWIFT_ANDROID_ICU_I18N}")
   else()
     list(APPEND result "-lobjc")
   endif()
@@ -967,7 +991,7 @@ function(_add_swift_library_single target name)
     set_target_properties("${target}"
       PROPERTIES
       INSTALL_NAME_DIR "${install_name_dir}")
-  elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT "${SWIFTLIB_SINGLE_SDK}" STREQUAL "ANDROID")
     set_target_properties("${target}"
       PROPERTIES
       INSTALL_RPATH "$ORIGIN:/usr/lib/swift/linux")

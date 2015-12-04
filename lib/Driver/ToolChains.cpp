@@ -1211,12 +1211,33 @@ toolchains::GenericUnix::constructInvocation(const LinkJobAction &job,
     Arguments.push_back(context.Args.MakeArgString(LibProfile));
   }
 
-  // FIXME: We probably shouldn't be adding an rpath here unless we know ahead
-  // of time the standard library won't be copied.
-  Arguments.push_back("-Xlinker");
-  Arguments.push_back("-rpath");
-  Arguments.push_back("-Xlinker");
-  Arguments.push_back(context.Args.MakeArgString(RuntimeLibPath));
+  if (getTriple().isAndroid()) {
+    // FIXME: These should be set in CMake.
+    Arguments.push_back("-target");
+    Arguments.push_back("armv7-none-linux-androideabi");
+
+    const char* ndkhome = getenv("ANDROID_NDK_HOME");
+    assert(ndkhome && "ANDROID_NDK_HOME needs to be set to NDK "
+      "install directory for linking");
+
+    auto libgccpath = Twine(ndkhome) + "/toolchains/"
+      "arm-linux-androideabi-4.8/prebuilt/linux-x86_64/"
+      "lib/gcc/arm-linux-androideabi/4.8";
+    Arguments.push_back("-L");
+    Arguments.push_back(context.Args.MakeArgString(libgccpath));
+
+    auto libcxxpath = Twine(ndkhome) + "/sources/"
+      "cxx-stl/llvm-libc++/libs/armeabi-v7a";
+    Arguments.push_back("-L");
+    Arguments.push_back(context.Args.MakeArgString(libcxxpath));
+  } else {
+    // FIXME: We probably shouldn't be adding an rpath here unless we know ahead
+    // of time the standard library won't be copied.
+    Arguments.push_back("-Xlinker");
+    Arguments.push_back("-rpath");
+    Arguments.push_back("-Xlinker");
+    Arguments.push_back(context.Args.MakeArgString(RuntimeLibPath));
+  }
 
   // Always add the stdlib
   Arguments.push_back("-lswiftCore");
