@@ -307,7 +307,69 @@ static void _addImageProtocolConformances(const mach_header *mh,
   
   _addImageProtocolConformancesBlock(conformances, conformancesSize);
 }
+
+#elif defined(__ANDROID__)
+#include <climits>
+#include <cstdio>
+#include <unordered_set>
+#include <unistd.h>
+
+static void _addImageProtocolConformances(const char *name) {
+  void *handle = dlopen(name, RTLD_LAZY);
+  if (!handle)
+    return; // not a shared library
+  auto conformances = reinterpret_cast<const uint8_t*>(
+      dlsym(handle, SWIFT_PROTOCOL_CONFORMANCES_SECTION));
+
+  if (!conformances) {
+    // if there are no conformances, don't hold this handle open.
+    dlclose(handle);
+    return;
+  }
+
+  // Extract the size of the conformances block from the head of the section
+  auto conformancesSize = *reinterpret_cast<const uint64_t*>(conformances);
+  conformances += sizeof(conformancesSize);
+
+  _addImageProtocolConformancesBlock(conformances, conformancesSize);
+
+  dlclose(handle);
+}
+
+static void android_iterate_libs(void (*callback)(const char*)) {
+  std::unordered_set<std::string> already;
+  FILE* f = fopen("/proc/self/maps", "r");
+  if (!f)
+    return;
+  char ownname[PATH_MAX + 1];
+  if (readlink("/proc/self/exe", ownname, sizeof(ownname)) == -1) {
+    fprintf(stderr, "swift: can't find path of executable\n");
+    ownname[0] = '\0';
+  }
+
+  char name[PATH_MAX + 1];
+  char perms[4 + 1];
+  while (fscanf(f, " %*s %4c %*s %*s %*s%*[ ]%[^\n]", perms, name) > 0) {
+    if (perms[2] != 'x' || name[0] != '/')
+      continue;
+    if (strncmp(name, "/dev/", 5) == 0)
+      continue;
+    std::string name_str = name;
+    if (already.count(name_str) != 0)
+     continue;
+    already.insert(name_str);
+    const char* libname = name_str.c_str();
+    if (strcmp(libname, ownname) == 0) {
+      // need to pass null if opening main executable
+      libname = nullptr;
+    }
+    callback(libname);
+  }
+  fclose(f);
+}
+
 #elif defined(__ELF__)
+
 static int _addImageProtocolConformances(struct dl_phdr_info *info,
                                           size_t size, void * /*data*/) {
   void *handle;
@@ -366,6 +428,8 @@ static void _initializeCallbacksToInspectDylib() {
   // Dyld will invoke this on our behalf for all images that have already
   // been loaded.
   _dyld_register_func_for_add_image(_addImageProtocolConformances);
+#elif defined(__ANDROID__)
+  android_iterate_libs(_addImageProtocolConformances);
 #elif defined(__ELF__)
   // Search the loaded dls. Unlike the above, this only searches the already
   // loaded ones.
