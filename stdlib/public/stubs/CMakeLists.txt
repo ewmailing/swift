@@ -14,9 +14,9 @@ else()
   set(swift_stubs_unicode_normalization_sources
       UnicodeNormalization.cpp)
   set(swift_stubs_link_libraries
-      ${ICU_UC_LIBRARY} ${ICU_I18N_LIBRARY})
+      ${ICU_UC_LIBRARY} ${ICU_I18N_LIBRARY} ${ICU_DATA_LIBRARY})
   include_directories(
-      ${ICU_UC_INCLUDE_DIR} ${ICU_I18N_INCLUDE_DIR})
+      ${ICU_UC_INCLUDE_DIR} ${ICU_I18N_INCLUDE_DIR} ${ICU_DATA_INCLUDE_DIR})
 endif()
 
 add_swift_library(swiftStdlibStubs IS_STDLIB IS_STDLIB_CORE
