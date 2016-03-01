@@ -625,6 +625,14 @@ the number of parallel build jobs to use""",
         help="Path to a directory containing headers libicui18n",
         metavar="PATH")
     android_group.add_argument(
+        "--android-icu-data",
+        help="Path to a directory containing libicudata.so",
+        metavar="PATH")
+    android_group.add_argument(
+        "--android-icu-data-include",
+        help="Path to a directory containing headers libicudata",
+        metavar="PATH")
+    android_group.add_argument(
         "--android-deploy-device-path",
         help="Path on an Android device to which built Swift stdlib products "
              "will be deployed. If running host tests, specify the '{}' "
@@ -669,6 +677,8 @@ the number of parallel build jobs to use""",
     if args.android:
         if args.android_ndk is None or \
                 args.android_ndk_version is None or \
+                args.android_icu_data is None or \
+                args.android_icu_data_include is None or \
                 args.android_icu_uc is None or \
                 args.android_icu_uc_include is None or \
                 args.android_icu_i18n is None or \
@@ -676,7 +686,8 @@ the number of parallel build jobs to use""",
             print_with_argv0("When building for Android, --android-ndk, "
                              "--android-ndk-version, --android-icu-uc, "
                              "--android-icu-uc-include, --android-icu-i18n, "
-                             "and --android-icu-i18n-include must be "
+                             "--android-icu-i18n-include, --android-icu-data, "
+                             "and --android-icu-data-include must be "
                              "specified.")
             return 1
         # FIXME: lib/Driver/ToolChains.cpp depends on this environment variable
@@ -999,6 +1010,8 @@ the number of parallel build jobs to use""",
             "--android-icu-uc-include", args.android_icu_uc_include,
             "--android-icu-i18n", args.android_icu_i18n,
             "--android-icu-i18n-include", args.android_icu_i18n_include,
+            "--android-icu-data", args.android_icu_data,
+            "--android-icu-data-include", args.android_icu_data_include,
         ]
         if args.android_deploy_device_path:
             build_script_impl_args += [
@@ -1025,6 +1038,8 @@ the number of parallel build jobs to use""",
             "--android-icu-uc-include", args.android_icu_uc_include,
             "--android-icu-i18n", args.android_icu_i18n,
             "--android-icu-i18n-include", args.android_icu_i18n_include,
+            "--android-icu-data", args.android_icu_data,
+            "--android-icu-data-include", args.android_icu_data_include,
         ]
     build_script_impl_args += build_script_impl_inferred_args
 

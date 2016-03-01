@@ -212,6 +212,8 @@ KNOWN_SETTINGS=(
     android-icu-uc-include             ""        "Path to a directory containing headers for libicuuc"
     android-icu-i18n                   ""        "Path to a directory containing libicui18n.so"
     android-icu-i18n-include           ""        "Path to a directory containing headers libicui18n"
+    android-icu-data                   ""        "Path to a directory containing libicudata.so"
+    android-icu-data-include           ""        "Path to a directory containing headers libicudata"
     android-deploy-device-path         ""        "Path on an Android device to which built Swift stdlib products will be deployed"
     export-compile-commands            ""        "set to generate JSON compilation databases for each build product"
 )
@@ -1566,6 +1568,8 @@ for deployment_target in "${HOST_TARGET}" "${CROSS_TOOLS_DEPLOYMENT_TARGETS[@]}"
                         -DSWIFT_ANDROID_ICU_UC_INCLUDE="${ANDROID_ICU_UC_INCLUDE}"
                         -DSWIFT_ANDROID_ICU_I18N="${ANDROID_ICU_I18N}"
                         -DSWIFT_ANDROID_ICU_I18N_INCLUDE="${ANDROID_ICU_I18N_INCLUDE}"
+                        -DSWIFT_ANDROID_ICU_DATA="${ANDROID_ICU_DATA}"
+                        -DSWIFT_ANDROID_ICU_DATA_INCLUDE="${ANDROID_ICU_DATA_INCLUDE}"
                     )
                 fi
 

@@ -139,6 +139,10 @@ set(SWIFT_ANDROID_ICU_I18N "" CACHE STRING
   "Path to a directory containing libicui18n.so")
 set(SWIFT_ANDROID_ICU_I18N_INCLUDE "" CACHE STRING
   "Path to a directory containing headers libicui18n")
+set(SWIFT_ANDROID_ICU_DATA "" CACHE STRING
+  "Path to a directory containing libicudata.so")
+set(SWIFT_ANDROID_ICU_DATA_INCLUDE "" CACHE STRING
+  "Path to a directory containing headers libicudata")
 
 #
 # User-configurable Darwin-specific options.
